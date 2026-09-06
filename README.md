@@ -80,3 +80,56 @@ dj s    # shell
 ```
 
 That's it. Go build something awesome!
+
+## Command-line Interface
+
+```shell
+dj [COMMAND] [ARGS]...
+```
+
+| Command                          | Description                                                       |
+|:---------------------------------|:------------------------------------------------------------------|
+| `dj runserver` / `dj run`        | Start the Django development server (default)                     |
+| `dj <command>`                   | Proxy any command to python manage.py <command>                   |
+| `dj example <SCRIPTS> [ARGS]...` | Run a custom Python script with the same environment and features |
+
+## Configuration
+
+Dj looks for a `start.toml` file in the current directory. Check out the
+[example configuration](start.toml) for all available options.
+
+All sections are optional — Dj uses sensible defaults for everything.
+
+## Features
+
+### Tuna integration
+
+When `features.tuna = true`, Dj wraps your command with `tuna secrets run`,
+injecting cloud secrets into your environment. Perfect for development
+environments that depend on external secrets.
+
+### uv support
+
+When `features.uv = true`, Dj uses `uv run` instead of the default Python
+interpreter. Faster dependency resolution and better package management — all
+with zero extra config.
+
+### Example mode
+
+The `example` command lets you run any Python script with the same environment
+and feature wrappers as your Django app. It's ideal for:
+
+- Debugging scripts
+- One-off data migrations
+- Testing code that depends on Tuna secrets or `uv`
+
+**Example:**
+
+```shell
+dj example scripts/hello.py
+dj example scripts/debug.py --verbose
+```
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history and version details.

@@ -4,6 +4,7 @@
 //! with optional Tuna cloud secrets integration.
 
 use clap::{Parser, Subcommand, error::ErrorKind};
+use std::path::PathBuf;
 
 /// Launch App in development mode with Tuna cloud secrets.
 #[derive(Debug)]
@@ -17,7 +18,7 @@ pub(crate) struct DjUp {
     version,
     about,
     long_about = None,
-    override_usage = "dj [OPTIONS] [MANAGE_ARGS]...",
+    override_usage = "dj [OPTIONS] [COMMAND] [ARGS]...",
     after_help = format!(r#"{bold}{underline}Django Manage Proxy Modes{reset}:
 
 Any unknown command is automatically proxied to `manage.py`.
@@ -26,7 +27,20 @@ Examples:
   dj <command>    Proxy any arbitrary command to python manage.py <command>
   dj m            Alias for `migrate`
   dj mm           Alias for `makemigrations`
-  dj s            Alias for `shell`"#,
+  dj s            Alias for `shell`
+
+{bold}{underline}Example Modes{reset}:
+
+Run custom Python scripts with the same environment and features.
+
+Usage:
+  dj example <SCRIPT> [ARGS]...
+
+Examples:
+  dj example sandbox/check_llm.py
+  dj example ./my_script.py --name=world
+
+All features (tuna, uv) are available in Example mode just like in `runserver`."#,
     bold="\x1b[1m",
     underline="\x1b[4m",
     reset="\x1b[0m")
@@ -52,6 +66,16 @@ pub(crate) enum Command {
     /// Run any `manage.py` command — just pass it along.
     #[command(external_subcommand)]
     Manage(Vec<String>),
+
+    /// Run an example Python script with the same environment and features.
+    Example {
+        /// Path to the Python script to execute.
+        path: PathBuf,
+
+        /// Arguments to pass to the script (optional).
+        #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
+        args: Vec<String>,
+    },
 }
 
 /// Parse command-line arguments and return the configuration.

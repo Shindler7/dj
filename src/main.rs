@@ -86,5 +86,6 @@ fn dj_start() -> AnyhowResult<ExitCode> {
             let django_commands = django_args.into();
             executor::manage(&params, &django_commands)
         }
+        ArgsCommand::Example { path, args } => executor::example(&params, &path, &args),
     }
 }

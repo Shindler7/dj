@@ -9,43 +9,10 @@ use crate::{
     parse_toml::{DjangoCommands, Params},
 };
 use anyhow::{Result as AnyhowResult, bail};
-use std::process::{Command, ExitCode, ExitStatus, Stdio};
-
-/// Prepends feature-related commands (Tuna, uv) to the Django command list.
-///
-/// If Tuna is enabled, it injects `tuna secrets run ...` with credentials.
-/// If uv is enabled, it injects `uv run ...`.
-///
-/// Feature commands are always prepended before the actual Django command.
-fn update_commands_by_features(
-    django_commands: DjangoCommands,
-    params: &Params,
-) -> AnyhowResult<DjangoCommands> {
-    if !params.features.tuna && !params.features.uv {
-        return Ok(django_commands);
-    }
-
-    let mut features = DjangoCommands::new();
-
-    if params.features.tuna {
-        match &params.tuna {
-            Some(tuna_params) => features.extend(tuna_args(tuna_params)),
-            None => bail!(
-                "Tuna feature is enabled (`features.tuna = true`), \
-                but the `[tuna]` configuration block is missing. \
-                Either add a `[tuna]` section to your `start.toml` or set `features.tuna = false`."
-            ),
-        }
-    }
-
-    if params.features.uv {
-        features.extend(uv_args());
-    }
-
-    features.extend(django_commands);
-
-    Ok(features)
-}
+use std::{
+    path::Path,
+    process::{Command, ExitCode, ExitStatus, Stdio},
+};
 
 /// Starts the Django development server with the provided configuration.
 pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
@@ -64,10 +31,7 @@ pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
         );
     };
 
-    django_commands = update_commands_by_features(django_commands, params)?;
-
-    let exit_code = command_execute(Command::try_from(django_commands)?);
-    Ok(exit_code)
+    wrap_and_execute(django_commands, params)
 }
 
 /// Executes a `manage.py` command with the given arguments.
@@ -81,16 +45,83 @@ pub(super) fn manage(params: &Params, django_args: &DjangoCommands) -> AnyhowRes
     django_commands.push(MANAGE_PY.to_string());
     django_commands.extend(django_args.iter().cloned());
 
-    django_commands = update_commands_by_features(django_commands, params)?;
+    wrap_and_execute(django_commands, params)
+}
 
+/// Executes a custom Python script with the same environment and feature wrappers.
+///
+/// ## Arguments
+// - `params` — Application configuration (features, Tuna params, etc.)
+// - `script` — Path to the Python script to execute
+// - `args` — Additional arguments to pass to the script
+pub(super) fn example(params: &Params, script: &Path, args: &[String]) -> AnyhowResult<ExitCode> {
+    if !script.is_file() {
+        bail!("script file not found: {}", script.display());
+    }
+
+    let mut django_commands = DjangoCommands::new();
+
+    if !params.features.uv {
+        django_commands.push(PYTHON_BIN.to_string());
+    }
+
+    django_commands.push(script.to_string_lossy().to_string());
+    django_commands.extend(args.iter().cloned());
+
+    wrap_and_execute(django_commands, params)
+}
+
+/// Prepends feature-related commands (Tuna, uv) to the Django command list.
+///
+/// If Tuna is enabled, it injects `tuna secrets run ...` with credentials.
+/// If uv is enabled, it injects `uv run ...`.
+///
+/// Feature commands are always prepended before the actual Django command.
+fn update_commands_by_features(
+    django_commands: DjangoCommands,
+    params: &Params,
+) -> AnyhowResult<DjangoCommands> {
+    let mut features = DjangoCommands::new();
+
+    // Tuna.
+    if params.features.tuna {
+        match &params.tuna {
+            Some(tuna_params) => features.extend(tuna_args(tuna_params)),
+            None => bail!(
+                "Tuna feature is enabled (`features.tuna = true`), \
+                but the `[tuna]` configuration block is missing. \
+                Either add a `[tuna]` section to your `start.toml` or set `features.tuna = false`."
+            ),
+        }
+    }
+
+    // Uv.
+    if params.features.uv {
+        features.extend(uv_args());
+    }
+
+    // Return without features.
+    if features.is_empty() {
+        return Ok(django_commands);
+    }
+
+    features.extend(django_commands);
+
+    Ok(features)
+}
+
+/// Wraps the command with feature flags (Tuna, uv) and executes it.
+///
+/// This is the common execution path for all commands — it applies
+/// feature wrappers and spawns the final process.
+fn wrap_and_execute(django_commands: DjangoCommands, params: &Params) -> AnyhowResult<ExitCode> {
+    let django_commands = update_commands_by_features(django_commands, params)?;
     let exit_code = command_execute(Command::try_from(django_commands)?);
+
     Ok(exit_code)
 }
 
 /// Spawns a child process, waits for it to complete, and returns the exit status.
-///
-/// If the process fails to spawn or errors during execution, it's killed and
-/// a failure code is returned.
 fn command_execute(mut command: Command) -> ExitCode {
     command
         .stdin(Stdio::inherit())
@@ -100,7 +131,7 @@ fn command_execute(mut command: Command) -> ExitCode {
     match command.status() {
         Ok(status) if status.success() => ExitCode::SUCCESS,
         Ok(status) => {
-            eprintln!("Command failed: {}", status_display(status));
+            eprintln!("Command failed: {}", format_exit_status(status));
             ExitCode::FAILURE
         }
         Err(err) => {
@@ -114,7 +145,8 @@ fn command_execute(mut command: Command) -> ExitCode {
 }
 
 /// Formats a process exit status into a human-readable string.
-fn status_display(status: ExitStatus) -> String {
+#[must_use]
+fn format_exit_status(status: ExitStatus) -> String {
     status
         .code()
         .map(|code| format!("exit code {code}"))
