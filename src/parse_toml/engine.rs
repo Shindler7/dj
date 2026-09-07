@@ -13,6 +13,7 @@ use toml::Value;
 ///
 /// Matches patterns like `${API_KEY}`, `${DATABASE_URL}`, etc.
 /// The capturing group extracts the variable name for lookup.
+#[allow(clippy::expect_used)]
 static RE_TOML: LazyLock<Regex> = {
     LazyLock::new(|| {
         Regex::new(r"\$\{([A-Za-z_][A-Za-z0-9_]*)}").expect("Invalid placeholder regex")
@@ -81,17 +82,16 @@ fn expand_placeholders(input: &str, vars: &HashMap<String, String>) -> AnyhowRes
     let result = re.replace_all(input, |caps: &regex::Captures| {
         let key = &caps[1];
 
-        match vars.get(key) {
-            Some(val) => val.clone(),
-            None => {
-                missing_key = Some(key.to_string());
-                String::new()
-            }
+        if let Some(val) = vars.get(key) {
+            val.clone()
+        } else {
+            missing_key = Some(key.to_string());
+            String::new()
         }
     });
 
     if let Some(key) = missing_key {
-        bail!("Variable `{}` is referenced in TOML but not found", key);
+        bail!("Variable `{key}` is referenced in TOML but not found");
     }
 
     Ok(result.into_owned())

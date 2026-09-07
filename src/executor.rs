@@ -29,7 +29,7 @@ pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
         log::warn!(
             "custom command detected — [django] section settings (port, flags, etc.) are ignored."
         );
-    };
+    }
 
     wrap_and_execute(django_commands, params)
 }
@@ -147,8 +147,8 @@ fn command_execute(mut command: Command) -> ExitCode {
 /// Formats a process exit status into a human-readable string.
 #[must_use]
 fn format_exit_status(status: ExitStatus) -> String {
-    status
-        .code()
-        .map(|code| format!("exit code {code}"))
-        .unwrap_or_else(|| "terminated".to_string())
+    status.code().map_or_else(
+        || "terminated".to_string(),
+        |code| format!("exit code `{code}`"),
+    )
 }

@@ -62,7 +62,7 @@ fn main() -> ExitCode {
         .init();
 
     dj_start().unwrap_or_else(|err| {
-        error!("{}", err);
+        error!("{err}");
         ExitCode::FAILURE
     })
 }
@@ -75,10 +75,7 @@ fn dj_start() -> AnyhowResult<ExitCode> {
     let params = read_params()?;
     let command = parse_args().command;
 
-    log::debug!(
-        "TOML file loaded successfully, now executing command `{:?}`",
-        command
-    );
+    log::debug!("TOML file loaded successfully, now executing command `{command:?}`");
 
     match command {
         ArgsCommand::Runserver => executor::run_server(&params),

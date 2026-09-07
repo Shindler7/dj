@@ -2,7 +2,7 @@
 name = "dj"
 authors = ["Vlad Barmichev <barmichev@gmail.com"]
 description = "Console launcher for Django applications."
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 rust-version = "1.93"
 
@@ -13,7 +13,7 @@ lto = "thin"
 
 [dependencies]
 anyhow = "1"
-clap = {version = "4", features = ["derive"]}
+clap = { version = "4", features = ["derive"] }
 dotenvy = "0.15"
 log = { version = "0" }
 env_logger = { version = "0" }
@@ -31,3 +31,13 @@ unreachable_pub = "warn"
 unsafe_code = "warn"
 unused_crate_dependencies = "warn"
 unused_must_use = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+clone_on_ref_ptr = "warn"
+unwrap_used = "warn"
+expect_used = "warn"

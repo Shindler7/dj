@@ -61,42 +61,51 @@ pub(crate) struct Params {
 
 #[derive(Debug, Deserialize)]
 #[serde(default)]
+#[allow(clippy::struct_excessive_bools)]
 pub(crate) struct Django {
     /// Core Django launch configuration.
     #[serde(rename = "runserver")]
     run_server: DjangoCommands,
 
     /// Port to bind the development server to.
+    #[serde(default = "default_port")]
     pub(crate) port: u16,
 
     /// Use IPv6 address for the server.
+    #[serde(default)]
     pub(crate) ipv6: bool,
 
     /// Disable multi-threading.
-    #[serde(rename = "nothreading")]
+    #[serde(rename = "nothreading", default)]
     pub(crate) no_threading: bool,
 
     /// Disable auto-reload on file changes.
-    #[serde(rename = "noreload")]
+    #[serde(rename = "noreload", default)]
     pub(crate) no_reload: bool,
 
     /// Disable serving static files via Django.
-    #[serde(rename = "nostatic")]
+    #[serde(rename = "nostatic", default)]
     pub(crate) no_static: bool,
 
     /// Run server in insecure mode (allows serving over HTTP in production).
+    #[serde(default)]
     pub(crate) insecure: bool,
 
     /// Skip system checks before running the server.
-    #[serde(rename = "skip-checks")]
+    #[serde(rename = "skip-checks", default)]
     pub(crate) skip_checks: bool,
+}
+
+/// Returns the default port for the Django development server.
+fn default_port() -> u16 {
+    8000
 }
 
 impl Default for Django {
     fn default() -> Self {
         Self {
             run_server: DjangoCommands::default(),
-            port: 8000,
+            port: default_port(),
             ipv6: false,
             no_threading: false,
             no_reload: false,

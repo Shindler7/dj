@@ -22,7 +22,7 @@ impl From<Vec<String>> for DjangoCommands {
 
 impl From<Vec<&str>> for DjangoCommands {
     fn from(vec: Vec<&str>) -> Self {
-        Self(vec.iter().map(|s| s.to_string()).collect())
+        Self(vec.iter().map(ToString::to_string).collect())
     }
 }
 
