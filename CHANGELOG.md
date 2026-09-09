@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] — 2026-09-09
+
+### Added
+
+- **Ctrl-C signal handling** – Graceful interruption support via `ctrlc` crate, allowing
+  the process to clean up properly when interrupted by the user
+- **New constant** `DEFAULT_RUN_DJANGO` – Centralized default runserver command string
+
+### Changed
+
+- **Refactored `DjangoCommands` struct**:
+    - Migrated from tuple struct `Vec<String>` to a named field `command: Vec<String>`
+    - Improved readability and maintainability with explicit field access
+- **Renamed method** – `is_default()` → `is_default_run()` for better clarity
+- **Improved error handling in `command_execute`**:
+    - Replaced `eprintln!` with structured `log::error!` and `log::info!` macros
+    - Added `anyhow::Context` for better error context
+    - Returns `AnyhowResult<ExitCode>` instead of raw `ExitCode`
+- **Logging improvements**:
+    - Inlined format arguments in log macros (`writeln!` without positional args)
+    - Added logging for command start (`"Running command..."`) and completion
+      (`"Command completed successfully."`)
+    - Changed error output to use `{err:#}` for more detailed error formatting
+
+### Dependencies
+
+- **Added**: `ctrlc"`
+
 ## [0.1.4] — 2026-09-07
 
 ### Added

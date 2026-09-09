@@ -49,20 +49,14 @@ fn main() -> ExitCode {
     env_logger::builder()
         .format_timestamp(None)
         .format(move |buf, record| {
-            writeln!(
-                buf,
-                "[{} | {}]: {}",
-                app_name,
-                record.level(),
-                record.args()
-            )
+            writeln!(buf, "[{} | {}] {}", app_name, record.level(), record.args())
         })
         .write_style(WriteStyle::Auto)
         .filter_level(LevelFilter::Info)
         .init();
 
     dj_start().unwrap_or_else(|err| {
-        error!("{err}");
+        error!("{err:#}");
         ExitCode::FAILURE
     })
 }

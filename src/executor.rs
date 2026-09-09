@@ -8,17 +8,21 @@ use crate::{
     constants::{MANAGE_PY, PYTHON_BIN},
     parse_toml::{DjangoCommands, Params},
 };
-use anyhow::{Result as AnyhowResult, bail};
+use anyhow::{Context, Result as AnyhowResult, bail};
 use std::{
     path::Path,
     process::{Command, ExitCode, ExitStatus, Stdio},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 /// Starts the Django development server with the provided configuration.
 pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
     let mut django_commands = params.django.runserver();
 
-    if django_commands.is_default() {
+    if django_commands.is_default_run() {
         // manage.py
         django_commands.push(MANAGE_PY.to_string());
         // runserver <args>
@@ -116,30 +120,48 @@ fn update_commands_by_features(
 /// feature wrappers and spawns the final process.
 fn wrap_and_execute(django_commands: DjangoCommands, params: &Params) -> AnyhowResult<ExitCode> {
     let django_commands = update_commands_by_features(django_commands, params)?;
-    let exit_code = command_execute(Command::try_from(django_commands)?);
-
-    Ok(exit_code)
+    command_execute(django_commands)
 }
 
 /// Spawns a child process, waits for it to complete, and returns the exit status.
-fn command_execute(mut command: Command) -> ExitCode {
+fn command_execute(django_command: DjangoCommands) -> AnyhowResult<ExitCode> {
+    let mut command = Command::try_from(django_command)?;
+    log::info!("Running command...");
+
     command
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
 
-    match command.status() {
-        Ok(status) if status.success() => ExitCode::SUCCESS,
-        Ok(status) => {
-            eprintln!("Command failed: {}", format_exit_status(status));
-            ExitCode::FAILURE
-        }
+    let running = Arc::new(AtomicBool::new(true));
+    let running_clone = Arc::clone(&running);
+
+    ctrlc::set_handler(move || {
+        running_clone.store(false, Ordering::SeqCst);
+    })
+    .context("Failed to set Ctrl-C handler")?;
+
+    match command.spawn() {
+        Ok(mut child) => match child.wait() {
+            Ok(status) if status.success() => {
+                log::info!("Command completed successfully.");
+                Ok(ExitCode::SUCCESS)
+            }
+            Ok(status) => {
+                log::error!("Command failed: {}", format_exit_status(status));
+                Ok(ExitCode::FAILURE)
+            }
+            Err(err) => {
+                log::error!(
+                    "Failed to run `{}`: {err}",
+                    command.get_program().to_string_lossy()
+                );
+                Ok(ExitCode::FAILURE)
+            }
+        },
         Err(err) => {
-            eprintln!(
-                "Failed to run `{}`: {err}",
-                command.get_program().to_string_lossy()
-            );
-            ExitCode::FAILURE
+            eprintln!("Failed to run command `{command:?}`: {err}");
+            Ok(ExitCode::FAILURE)
         }
     }
 }

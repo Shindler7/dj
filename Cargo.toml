@@ -2,7 +2,7 @@
 name = "dj"
 authors = ["Vlad Barmichev <barmichev@gmail.com"]
 description = "Console launcher for Django applications."
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 rust-version = "1.93"
 
@@ -14,6 +14,7 @@ lto = "thin"
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
+ctrlc = "3"
 dotenvy = "0.15"
 log = { version = "0" }
 env_logger = { version = "0" }

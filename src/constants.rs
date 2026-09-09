@@ -31,3 +31,6 @@ pub(crate) const PYTHON_BIN: &str = "py";
 
 #[cfg(not(windows))]
 pub(crate) const PYTHON_BIN: &str = "python3";
+
+/// Default Django management command for starting the development server.
+pub(crate) const DEFAULT_RUN_DJANGO: &str = "runserver";

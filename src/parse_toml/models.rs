@@ -2,7 +2,7 @@
 //!
 //! This module defines strongly typed config sections deserialized with Serde.
 //! Sections and fields with defaults are optional in TOML; omitted values fall
-//! back to sensible defaults. Sensitive values are redacted in `Debug` output.
+//! back to sensible defaults. Sensitive values are redacted in the `Debug` output.
 
 use crate::parse_toml::types::DjangoCommands;
 use serde::Deserialize;
