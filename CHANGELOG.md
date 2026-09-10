@@ -33,10 +33,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
       (`"Command completed successfully."`)
     - Changed error output to use `{err:#}` for more detailed error formatting
 
-### Dependencies
-
-- **Added**: `ctrlc"`
-
 ## [0.1.4] — 2026-09-07
 
 ### Added
