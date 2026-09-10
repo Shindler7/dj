@@ -9,9 +9,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- **Ctrl-C signal handling** – Graceful interruption support via `ctrlc` crate, allowing
-  the process to clean up properly when interrupted by the user
 - **New constant** `DEFAULT_RUN_DJANGO` – Centralized default runserver command string
+
+### Fixed
+
+- **Critical: incorrect order of default Django server command arguments** — the
+  argument sequence was malformed, preventing the application from starting. Command
+  construction now produces the correct order for `runserver`.
 
 ### Changed
 

@@ -1,6 +1,5 @@
 //! Core data structures used throughout the application.
 
-use crate::constants::DEFAULT_RUN_DJANGO;
 use anyhow::{Context, Result as AnyhowResult};
 use serde::Deserialize;
 use std::{
@@ -9,7 +8,7 @@ use std::{
 };
 
 /// Container for additional command-line arguments to pass through.
-#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq, Default)]
 #[serde(from = "Vec<String>")]
 pub(crate) struct DjangoCommands {
     command: Vec<String>,
@@ -42,14 +41,6 @@ impl TryFrom<DjangoCommands> for Command {
     }
 }
 
-impl Default for DjangoCommands {
-    fn default() -> Self {
-        Self {
-            command: vec![DEFAULT_RUN_DJANGO.to_string()],
-        }
-    }
-}
-
 impl IntoIterator for DjangoCommands {
     type Item = String;
     type IntoIter = std::vec::IntoIter<Self::Item>;
@@ -79,10 +70,5 @@ impl DjangoCommands {
         Self {
             command: Vec::new(),
         }
-    }
-
-    /// Check if the command is the default one.
-    pub(crate) fn is_default_run(&self) -> bool {
-        self.command.len() == 1 && self.command[0] == DEFAULT_RUN_DJANGO
     }
 }

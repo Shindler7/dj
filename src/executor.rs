@@ -5,35 +5,38 @@
 
 use crate::{
     commands::{tuna_args, uv_args},
-    constants::{MANAGE_PY, PYTHON_BIN},
+    constants::{DEFAULT_RUN_DJANGO, MANAGE_PY, PYTHON_BIN},
     parse_toml::{DjangoCommands, Params},
 };
-use anyhow::{Context, Result as AnyhowResult, bail};
+use anyhow::{Result as AnyhowResult, bail};
 use std::{
     path::Path,
     process::{Command, ExitCode, ExitStatus, Stdio},
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
 };
 
 /// Starts the Django development server with the provided configuration.
 pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
     let mut django_commands = params.django.runserver();
+    log::info!("Starting Django development server: {django_commands:?}");
 
-    if django_commands.is_default_run() {
-        // manage.py
-        django_commands.push(MANAGE_PY.to_string());
-        // runserver <args>
-        django_commands.extend(params.django.runserver_args());
-        // --port XXXX
-        django_commands.push(params.django.port.to_string());
+    // Default command if no custom command is provided.
+    if django_commands.is_empty() {
+        let mut default_args = vec![
+            MANAGE_PY.to_string(),
+            DEFAULT_RUN_DJANGO.to_string(),
+            params.django.port.to_string(),
+        ];
+
+        default_args.extend(params.django.runserver_args());
+
+        django_commands = default_args.into();
     } else {
-        log::warn!(
+        log::info!(
             "custom command detected — [django] section settings (port, flags, etc.) are ignored."
         );
     }
+
+    log::info!("Final command: {django_commands:?}");
 
     wrap_and_execute(django_commands, params)
 }
@@ -132,14 +135,6 @@ fn command_execute(django_command: DjangoCommands) -> AnyhowResult<ExitCode> {
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
-
-    let running = Arc::new(AtomicBool::new(true));
-    let running_clone = Arc::clone(&running);
-
-    ctrlc::set_handler(move || {
-        running_clone.store(false, Ordering::SeqCst);
-    })
-    .context("Failed to set Ctrl-C handler")?;
 
     match command.spawn() {
         Ok(mut child) => match child.wait() {
