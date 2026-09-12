@@ -1,4 +1,6 @@
-[![Crates.io](https://img.shields.io/crates/v/dj.svg)](https://crates.io/crates/dj)
+![GitHub Release](https://img.shields.io/github/v/release/Shindler7/dj)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/shindler7/dj)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/shindler7/dj/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Dj — a console utility for running Django applications
