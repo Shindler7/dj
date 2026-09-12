@@ -100,6 +100,15 @@ dj s    # shell
 
 That's it. Go build something awesome!
 
+## Pre-built binaries
+
+Every release ships pre-built binaries for Linux, Windows, and macOS. Grab the
+latest from
+the [Releases page](https://github.com/Shindler7/dj/releases/latest) — no Rust
+toolchain required. Just download, extract, and drop `dj` into your `PATH`.
+
+Prefer to build from source? See [Quick Start](#quick-start) above.
+
 ## Command-line Interface
 
 ```shell
