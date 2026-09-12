@@ -1,3 +1,5 @@
+[![Crates.io](https://img.shields.io/crates/v/dj-magic.svg)](https://crates.io/crates/dj-magic)
+[![Downloads](https://img.shields.io/crates/d/dj-magic.svg)](https://crates.io/crates/dj-magic)
 ![GitHub Release](https://img.shields.io/github/v/release/Shindler7/dj)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/shindler7/dj)
 ![GitHub commits since latest release](https://img.shields.io/github/commits-since/shindler7/dj/latest)
@@ -21,6 +23,16 @@ This little tool is written in Rust — because why not bring some speed and
 reliability to the party? It's a small personal project, but it's sitting right
 there on GitHub, open for anyone to use, tweak, or just poke around. If it
 saves you a few keystrokes too, feel free to grab it and make it your own.
+
+## Installation
+
+The easiest way — install from `crates.io`:
+
+```shell
+cargo install dj-magic
+```
+
+The binary is called `dj`. Make sure `~/.cargo/bin` is in your PATH.
 
 ## Quick Start
 
