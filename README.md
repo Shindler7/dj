@@ -57,11 +57,26 @@ This will install the dj binary to your Cargo bin directory (usually
 Create a `start.toml` file in your Django project root. Check out the
 Configuration section for a complete example.
 
+Run `dj init` in your Django project root to create a default `start.toml`:
+
+```shell
+dj init
+```
+
+This scaffolds a minimal configuration file. Edit it to match your project —
+see the Configuration section for all available options.
+
 > ⚠️ **Important:** Never hardcode sensitive values (API keys, passwords, etc.)
 > directly in `start.toml`. Instead, use a `.env` file for your secrets and
 > reference them with `${VAR}` placeholders — for example,
 > `api_key = "${TUNA_API_KEY}"`. This keeps your credentials out of version
 > control.
+
+To overwrite an existing `start.toml`, use `--force`:
+
+```shell
+dj init --force
+```
 
 ### 5. Run your Django app
 
@@ -93,6 +108,7 @@ dj [COMMAND] [ARGS]...
 
 | Command                         | Description                                                       |
 |:--------------------------------|:------------------------------------------------------------------|
+| `dj init`                       | Create a default `start.toml` in the current directory            |
 | `dj runserver` / `dj run`       | Start the Django development server (default)                     |
 | `dj <command>`                  | Proxy any command to python manage.py <command>                   |
 | `dj example <SCRIPT> [ARGS]...` | Run a custom Python script with the same environment and features |
