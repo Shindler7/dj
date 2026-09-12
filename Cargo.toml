@@ -6,7 +6,7 @@ version = "0.1.6"
 edition = "2024"
 rust-version = "1.93"
 license = "MIT"
-documentation = "README.md"
+readme = "README.md"
 repository = "https://github.com/Shindler7/dj"
 
 [profile.release]
