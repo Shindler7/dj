@@ -32,12 +32,12 @@ mod constants;
 mod executor;
 mod parse_toml;
 
-use anyhow::Result as AnyhowResult;
+use anyhow::{Context, Result as AnyhowResult};
 use cli::{Command as ArgsCommand, parse_args};
 use env_logger::WriteStyle;
 use log::{LevelFilter, error};
 use parse_toml::read_params;
-use std::{io::Write, process::ExitCode};
+use std::{env, fs, io::Write, process::ExitCode};
 
 /// Application entry point.
 ///
@@ -63,13 +63,17 @@ fn main() -> ExitCode {
 
 /// Core application logic.
 ///
-/// Loads configuration, parses command-line arguments, and executes
-/// the requested command (`runserver` or `manage`).
+/// Parses command-line arguments and dispatches to the requested command:
+/// `init`, `runserver`, `manage`, or `example`.
 fn dj_start() -> AnyhowResult<ExitCode> {
-    let params = read_params()?;
     let command = parse_args().command;
 
-    log::debug!("TOML file loaded successfully, now executing command `{command:?}`");
+    if let ArgsCommand::Init { force } = command {
+        return init_dj(force);
+    }
+
+    let params = read_params()?;
+    log::debug!("Configuration loaded successfully.");
 
     match command {
         ArgsCommand::Runserver => executor::run_server(&params),
@@ -78,5 +82,29 @@ fn dj_start() -> AnyhowResult<ExitCode> {
             executor::manage(&params, &django_commands)
         }
         ArgsCommand::Example { path, args } => executor::example(&params, &path, &args),
+        ArgsCommand::Init { .. } => unreachable!(),
     }
+}
+
+/// Creates a default `start.toml` configuration file in the current directory.
+///
+/// If the file already exists and `force` is `false`, the function logs an
+/// error and returns `ExitCode::FAILURE` without modifying anything.
+fn init_dj(force: bool) -> AnyhowResult<ExitCode> {
+    let start_toml = constants::toml_path()?;
+    if start_toml.is_file() && !force {
+        log::error!(
+            "`{}` already exists. Use `--force` to overwrite.",
+            start_toml.display()
+        );
+        return Ok(ExitCode::FAILURE);
+    }
+
+    fs::write(&start_toml, constants::DEFAULT_TOML_CONTENT)
+        .with_context(|| format!("Failed to write `{}`", start_toml.display()))?;
+
+    log::info!("Created `{}`", start_toml.display());
+    log::info!("Edit the file, then run `dj runserver` (or just `dj`).");
+
+    Ok(ExitCode::SUCCESS)
 }

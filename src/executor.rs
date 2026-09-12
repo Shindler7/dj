@@ -42,10 +42,6 @@ pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
 pub(super) fn manage(params: &Params, django_args: &DjangoCommands) -> AnyhowResult<ExitCode> {
     let mut django_commands = DjangoCommands::new();
 
-    if !params.features.uv {
-        django_commands.push(PYTHON_BIN.to_string());
-    }
-
     django_commands.push(MANAGE_PY.to_string());
     django_commands.extend(django_args.iter().cloned());
 
@@ -64,10 +60,6 @@ pub(super) fn example(params: &Params, script: &Path, args: &[String]) -> Anyhow
     }
 
     let mut django_commands = DjangoCommands::new();
-
-    if !params.features.uv {
-        django_commands.push(PYTHON_BIN.to_string());
-    }
 
     django_commands.push(script.to_string_lossy().to_string());
     django_commands.extend(args.iter().cloned());
@@ -99,9 +91,11 @@ fn update_commands_by_features(
         }
     }
 
-    // Uv.
+    // Uv or Python.
     if params.features.uv {
         features.extend(uv_args());
+    } else {
+        features.push(PYTHON_BIN.to_string());
     }
 
     // Return without features.

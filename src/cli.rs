@@ -53,11 +53,19 @@ struct Cli {
 
 /// Parse CLI args into a `DjUp` struct.
 ///
-/// - If the user provides a valid subcommand, use it.
-/// - If no subcommand is given, default to `runserver`.
-/// - If the subcommand is unknown, treat it as `manage` and pass the raw args.
+/// - `init` — creates a default `start.toml` (use `--force` to overwrite).
+/// - `runserver` / `run` — starts the Django dev server (default).
+/// - `example <path>` — runs a Python script with the same environment.
+/// - Anything else is proxied to `manage.py` with the raw args.
 #[derive(Debug, Subcommand, Default)]
 pub(crate) enum Command {
+    /// Create a default `start.toml` in the current directory.
+    Init {
+        /// Overwrite an existing `start.toml`.
+        #[arg(long)]
+        force: bool,
+    },
+
     /// Start the Django development server (default).
     #[default]
     #[command(visible_alias = "run")]
