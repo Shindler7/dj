@@ -1,3 +1,6 @@
+[![Crates.io](https://img.shields.io/crates/v/dj.svg)](https://crates.io/crates/dj)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # Dj — a console utility for running Django applications
 
 At some point, you might ask yourself: why not use uv and tuna to run Django
@@ -52,12 +55,11 @@ This will install the dj binary to your Cargo bin directory (usually
 Create a `start.toml` file in your Django project root. Check out the
 Configuration section for a complete example.
 
-> ⚠️ Important: Never hardcode sensitive values (API keys, passwords, etc.)
-> directly in
-> start.toml. Instead, use a .env file for your secrets and reference them
-> with ${VAR} placeholders — for example, api_key = "${TUNA_API_KEY}". This
-> keeps your
-> credentials out of version control.
+> ⚠️ **Important:** Never hardcode sensitive values (API keys, passwords, etc.)
+> directly in `start.toml`. Instead, use a `.env` file for your secrets and
+> reference them with `${VAR}` placeholders — for example,
+> `api_key = "${TUNA_API_KEY}"`. This keeps your credentials out of version
+> control.
 
 ### 5. Run your Django app
 
@@ -87,16 +89,16 @@ That's it. Go build something awesome!
 dj [COMMAND] [ARGS]...
 ```
 
-| Command                          | Description                                                       |
-|:---------------------------------|:------------------------------------------------------------------|
-| `dj runserver` / `dj run`        | Start the Django development server (default)                     |
-| `dj <command>`                   | Proxy any command to python manage.py <command>                   |
-| `dj example <SCRIPTS> [ARGS]...` | Run a custom Python script with the same environment and features |
+| Command                         | Description                                                       |
+|:--------------------------------|:------------------------------------------------------------------|
+| `dj runserver` / `dj run`       | Start the Django development server (default)                     |
+| `dj <command>`                  | Proxy any command to python manage.py <command>                   |
+| `dj example <SCRIPT> [ARGS]...` | Run a custom Python script with the same environment and features |
 
 ## Configuration
 
-Dj looks for a `start.toml` file in the current directory. Check out the
-[example configuration](start.toml) for all available options.
+Dj looks for a `start.toml` file in the **current working directory**. Check
+out the [example configuration](start.toml) for all available options.
 
 All sections are optional — Dj uses sensible defaults for everything.
 
@@ -129,6 +131,40 @@ and feature wrappers as your Django app. It's ideal for:
 dj example scripts/hello.py
 dj example scripts/debug.py --verbose
 ```
+
+## Known Issues
+
+### Graceful shutdown for async commands
+
+`Dj` doesn't yet handle graceful shutdown correctly when running asynchronous
+commands — for example, a `uvicorn` server with `--reload`:
+
+```toml
+[django]
+runserver = ["python", "-m", "uvicorn", "--reload", "rustorgpred.asgi:application", "--port", "8080"]
+```
+
+#### What happens
+
+When you press `Ctrl+C`, the child process begins shutting down, but the
+terminal output gets garbled — log lines from the child and the parent
+interleave, and the console prompt returns before the process has fully exited.
+
+What we'd expect: `Dj` should wait for the child to finish its shutdown
+sequence and return control only after the terminal is in a clean state.
+
+#### Why it's tricky
+
+Asynchronous servers like `uvicorn` install their own signal handlers and spawn
+a reloader parent + worker child. The signal reaches Dj first, and by the time
+the child handles it, the terminal has already been partially handed back.
+
+Synchronous commands (`runserver`, `shell`, `migrate`, etc.) work fine — the
+issue only affects commands that manage their own signals and subprocesses.
+
+#### Status
+
+**Open** — no idiomatic solution found yet. Suggestions and PRs are welcome.
 
 ## Changelog
 
