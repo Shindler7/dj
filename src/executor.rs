@@ -17,7 +17,6 @@ use std::{
 /// Starts the Django development server with the provided configuration.
 pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
     let mut django_commands = params.django.runserver();
-    log::info!("Starting Django development server: {django_commands:?}");
 
     // Default command if no custom command is provided.
     if django_commands.is_empty() {
@@ -35,8 +34,6 @@ pub(super) fn run_server(params: &Params) -> AnyhowResult<ExitCode> {
             "custom command detected — [django] section settings (port, flags, etc.) are ignored."
         );
     }
-
-    log::info!("Final command: {django_commands:?}");
 
     wrap_and_execute(django_commands, params)
 }
